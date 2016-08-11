@@ -10,3 +10,19 @@ I'm using it to detect person in an image. It can be used to detect other object
  <li>Interace with OpenCV to visulize ouput results. </li>
  <li>Results can be dumped to text (csv) file. </li>
 </ul>
+
+## Usage
+TODO
+First compile the code. It requires boost c++ libraries.
+<code>
+ $ mkdir build
+ $ cd build
+ $ cmake ..
+ $ make 
+</code>
+ Excutable will be in the $SRC/bin folder.
+ <code>
+ $ ./poseletdetection ../model/person.xml path_to_yourimage.jpg -v 1 -s 1
+ </code>
+
+'''
