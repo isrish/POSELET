@@ -1,4 +1,6 @@
-#pragma once
+#ifndef POSELET_H
+#define POSELET_H
+
 #include "config.h"
 #include "hypothesis.h"
 #include "classifier.h"
@@ -66,3 +68,4 @@ inline void swap(poselet& p1, poselet& p2) {
   swap(p1._hypothesis,p2._hypothesis);
 }
 
+#endif

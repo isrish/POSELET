@@ -1,4 +1,5 @@
-#pragma once
+#ifndef POSELET_DETECTOR_H
+#define POSELET_DETECTOR_H
 #include "hypothesis.h"
 #include "poselet_hit.h"
 #include "model.h"
@@ -19,17 +20,17 @@ public:
   void init(const char* root_dir, const char* category_name, bool sequential);
 
   template <typename View> void detect_poselets(const View& v,
-   poselet_hits_vector& hits_out) const {
+                                                poselet_hits_vector& hits_out) const {
     _image2hits.compute_hits(v, hits_out);
   }
 
   template <typename View> void detect_objects(const View& v, bool useBigQ,
-    poselet_hits_vector& poselet_hits,
-    std::vector<object_hypothesis>& object_hits) const;
+                                               poselet_hits_vector& poselet_hits,
+                                               std::vector<object_hypothesis>& object_hits) const;
 
   template <typename View> void get_features_of_hits(const View& v,
-    const poselet_hits_vector& hits,
-    std::vector<std::vector<float> >& features) const;
+                                                     const poselet_hits_vector& hits,
+                                                     std::vector<std::vector<float> >& features) const;
 
   const poselets_model& model() const { return _model; }
 
@@ -47,24 +48,24 @@ private:
   void poselet_hits2bigq_poselet_hits(
       poselet_hits_vector& hits, std::vector<selection_t>& contrib_hits) const;
   void poselet_hits2hit_clusters(const poselet_hits_vector& hits,
-     std::vector<poselet_hits_vector>& clustered_hits) const;
+                                 std::vector<poselet_hits_vector>& clustered_hits) const;
   void poselet_hits2objects(const poselet_hits_vector& hits,
                             std::vector<object_hypothesis>& obj_hits,
                             std::vector<selection_t>& contrib_hits,
                             const int_point& dims) const;
   hit cluster2torso_hit(const poselet_hits_vector& hits,
-     const std::vector<hypothesis>& hyps, const selection_t& cluster) const;
+                        const std::vector<hypothesis>& hyps, const selection_t& cluster) const;
   void clipToImageBounds(poselet_hits_vector& hits, int w, int h) const;
 };
 
 void save_object_n_poselet_hits(
- const std::vector<object_hypothesis>& object_hits,
- const std::string& filename);
+    const std::vector<object_hypothesis>& object_hits,
+    const std::string& filename);
 
 template <typename View>
 void poselet_detector::detect_objects(
-  const View& v, bool useBigQ, poselet_hits_vector& poselet_hits,
-  std::vector<object_hypothesis>& object_hits) const {
+    const View& v, bool useBigQ, poselet_hits_vector& poselet_hits,
+    std::vector<object_hypothesis>& object_hits) const {
   poselet_hits.clear();
   boost::timer t;
 
@@ -72,11 +73,11 @@ void poselet_detector::detect_objects(
 
   std::vector<selection_t> contrib_hits;
   if (useBigQ) {
-    poselet_hits2bigq_poselet_hits(poselet_hits, contrib_hits);
-  }
+      poselet_hits2bigq_poselet_hits(poselet_hits, contrib_hits);
+    }
 
   poselet_hits2objects(poselet_hits, object_hits, contrib_hits,
-      cast_point<int_point>(v.dimensions()));
+                       cast_point<int_point>(v.dimensions()));
 
   std::cout << "Computed poselet hits in " << t.elapsed()
             << " sec." << std::endl;
@@ -90,8 +91,8 @@ void poselet_detector::detect_objects(
 
 template <typename View>
 void poselet_detector::get_features_of_hits(
-  const View& v, const poselet_hits_vector& hits,
-  std::vector<std::vector<float> >& features) const {
+    const View& v, const poselet_hits_vector& hits,
+    std::vector<std::vector<float> >& features) const {
   hits2features h2f(_model,hits);
   h2f.compute_features(v, _image2hits.target_dims());
   using std::swap;
@@ -99,3 +100,4 @@ void poselet_detector::get_features_of_hits(
 }
 
 
+#endif

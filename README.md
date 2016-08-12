@@ -7,22 +7,23 @@ I'm using it to detect person in an image. It can be used to detect other object
 
 ## Add-ons
 <ul>
- <li>Interace with OpenCV to visulize ouput results. </li>
- <li>Results can be dumped to text (csv) file. </li>
+ <li>Automatically process input. Uses OpenCV Mat to read either an image and a video file. </li>
+ <li>Option to visulaize detection results <li>
+ <li>Option to dumped detection results to a text (csv) file. </li>
 </ul>
 
 ## Usage
 TODO
 First compile the code. It requires boost c++ libraries.
-<code>
+```shell
  $ mkdir build
  $ cd build
  $ cmake ..
  $ make 
-</code>
- Excutable will be in the $SRC/bin folder.
- <code>
- $ ./poseletdetection ../model/person.xml path_to_yourimage.jpg -v 1 -s 1
- </code>
+```
+ Excutable will be in the bin folder.
+ ```shell
+ $ ./poseletdetection -h # displays the help message
+ $ ./poseletdetection ../model/person.xml path_to_yourimage.or.video -v 1 -s 1 -p 2 -t 10
+ ```
 
-'''

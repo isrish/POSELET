@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MODEL_H
+#define MODEL_H
 
 #include <vector>
 #include "config.h"
@@ -31,3 +32,4 @@ public:
   double cluster_thresh() const { return _cluster_thresh; }
   float wts(size_t poselet_id) const { return _wts[poselet_id]; }
 };
+#endif

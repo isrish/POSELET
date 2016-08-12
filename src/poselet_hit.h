@@ -1,4 +1,5 @@
-#pragma once
+#ifndef POSELET_HIT_H
+#define POSELET_HIT_H
 
 #include "config.h"
 #include "bounds.h"
@@ -44,7 +45,7 @@ public:
   }
 
   template <typename View, typename Color>
-    void draw(const View& v, const Color& c, int thickness=1) const {
+  void draw(const View& v, const Color& c, int thickness=1) const {
     typename View::value_type color;
     boost::gil::color_convert(c,color);
     draw_bounds(v,color,cast_bounds<int_bounds>(_bounds),thickness);
@@ -83,7 +84,7 @@ public:
 
   friend bool operator==(const poselet_hit& a, const poselet_hit& b) {
     return static_cast<const hit&>(a)==static_cast<const hit&>(b) &&
-           a._poselet_id==b._poselet_id; }
+        a._poselet_id==b._poselet_id; }
 
   int poselet_id() const { return _poselet_id; }
 
@@ -105,3 +106,4 @@ void  save_poselet_hits(const poselet_hits_vector& h, const char* f);
 void  load_poselet_hits(      poselet_hits_vector& h, const char* f);
 
 float_bounds keypoints2torso_bounds(const double_point torso[]);
+#endif

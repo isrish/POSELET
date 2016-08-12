@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CLASSIFIER_H
+#define CLASSIFIER_H
 
 #include "xml_utils.h"
 #include <vector>
@@ -189,3 +190,5 @@ linear_classifier<Real>::linear_classifier(rapidxml::xml_node<>* node) {
   lstr >> logit_a >> logit_b;
   _sig=sigmoid<double>(logit_a,logit_b);
 }
+
+#endif

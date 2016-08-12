@@ -1,4 +1,6 @@
-#pragma once
+#ifndef HYPOTHESIS_H
+#define HYPOTHESIS_H
+
 #include <vector>
 #include "config.h"
 #include "rapidxml.hpp"
@@ -12,8 +14,8 @@ public:
   hypothesis() {}
 
   hypothesis(const hypothesis& h)
- : _coords_sum(h._coords_sum), _coords_sum2(h._coords_sum2),
-    _w_sum(h._w_sum), _kp_distribs(h._kp_distribs), _rect(h._rect) {}
+    : _coords_sum(h._coords_sum), _coords_sum2(h._coords_sum2),
+      _w_sum(h._w_sum), _kp_distribs(h._kp_distribs), _rect(h._rect) {}
 
   hypothesis(rapidxml::xml_node<>* node, size_t num_keypoints);
 
@@ -49,3 +51,4 @@ private:
   std::vector<gauss2d> _kp_distribs;
   float_bounds _rect;
 };
+#endif
