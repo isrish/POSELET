@@ -32,52 +32,77 @@
 
 #include "logging.h"
 
-void Log::messege(std::string msg, bool showtime=false, MessageType mtype=Others)
+void Log::messege(std::string msg, bool showtime=false, MessegeType mtype=Others)
 {
-    std::string logname = name_.empty()?"":(name_+" ");
-    if (showtime==true)
+  std::string logname = name_.empty()?"":(name_+" ");
+  if (showtime==true)
     {
-        logname +=(getTimeStamp()+ " \n");
+      logname +=(getTimeStamp()+ " \n");
     }
-    else
+  else
     {
-        logname += "\r";
+      logname += "\r";
     }
 
-    switch(mtype)
+  switch(mtype)
     {
     case Critical:
-        printf(_GREENB "%s" _RESETB _RED "%s" _RESET "\n", logname.c_str(), msg.c_str());
-        break;
+      printf(_GREENB "%s" _RESETB _RED "%s" _RESET "\n", logname.c_str(), msg.c_str());
+      break;
     case Error:
-        printf(_GREENB "%s" _RESETB _RED "%s" _RESET "\n", logname.c_str(), msg.c_str());
-        break;
+      printf(_GREENB "%s" _RESETB _RED "%s" _RESET "\n", logname.c_str(), msg.c_str());
+      break;
     case Warning:
-        printf(_GREENB "%s" _RESETB _YELLOW "%s" _RESET "\n",logname.c_str(), msg.c_str());
-        break;
+      printf(_GREENB "%s" _RESETB _YELLOW "%s" _RESET "\n",logname.c_str(), msg.c_str());
+      break;
     case Info:
-        printf(_GREENB "%s" _RESETB _GREEN "%s" _RESET "\n",logname.c_str(), msg.c_str());
-        break;
+      printf(_GREENB "%s" _RESETB _GREEN "%s" _RESET "\n",logname.c_str(), msg.c_str());
+      break;
     case Others:
-        printf(_GREENB "%s" _RESETB _BLUE "%s" _RESET "\n", logname.c_str(), msg.c_str());
-        break;
+      printf(_GREENB "%s" _RESETB _BLUE "%s" _RESET "\n", logname.c_str(), msg.c_str());
+      break;
     default:
-        printf("%s\n", msg.c_str());
-        break;
+      printf("%s\n", msg.c_str());
+      break;
+    }
+}
+
+static void Log::messege(std::string msg, MessegeType mtype)
+{
+  switch(mtype)
+    {
+    case Critical:
+      printf(_RESETB _RED "%s" _RESET "\n", msg.c_str());
+      break;
+    case Error:
+      printf(_RESETB _RED "%s" _RESET "\n", msg.c_str());
+      break;
+    case Warning:
+      printf(_RESETB _YELLOW "%s" _RESET "\n", msg.c_str());
+      break;
+    case Info:
+      printf(_RESETB _GREEN "%s" _RESET "\n", msg.c_str());
+      break;
+    case Others:
+      printf(_RESETB _BLUE "%s" _RESET "\n", msg.c_str());
+      break;
+    default:
+      printf("%s\n", msg.c_str());
+      break;
     }
 }
 
 std::string Log::getTimeStamp()
 {
-    char            fmt[64], buf[64];
-    struct timeval  tv;
-    struct tm       *tm;
+  char            fmt[64], buf[64];
+  struct timeval  tv;
+  struct tm       *tm;
 
-    gettimeofday(&tv, NULL);
-    if((tm = localtime(&tv.tv_sec)) != NULL)
+  gettimeofday(&tv, NULL);
+  if((tm = localtime(&tv.tv_sec)) != NULL)
     {
-        strftime(fmt, sizeof fmt, "%H:%M:%S.%%06u", tm); //"%Y-%m-%d %H:%M:%S.%%06u %z"
-        snprintf(buf, sizeof buf, fmt, tv.tv_usec);
+      strftime(fmt, sizeof fmt, "%H:%M:%S.%%06u", tm); //"%Y-%m-%d %H:%M:%S.%%06u %z"
+      snprintf(buf, sizeof buf, fmt, tv.tv_usec);
     }
-    return std::string(buf);
+  return std::string(buf);
 }

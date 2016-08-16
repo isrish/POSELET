@@ -141,7 +141,8 @@ bool IsInside(const cv::Rect a, const cv::Rect b);
 void setLabel(cv::Mat &im, const std::string &name, const cv::Point2f &og);
 
 cv::Mat drawObjectbb(cv::Mat img, std::vector<poselet_api::ObjectHit>hits,double scorethr=-INFINITY);
-
+cv::Mat drawObjectbb(cv::Mat img, std::vector<cv::Rect> object_hits, std::vector<double> score_hit);
+void getBBfromObjectHits(std::vector<poselet_api::ObjectHit> object_hits,double scorethr,cv::Rect imgsize, std::vector<cv::Rect>&bb_out, std::vector<double>&scores_out);
 
 
 typedef enum
@@ -164,9 +165,9 @@ struct params
   std::string fn_input;
   FILETYPE intype; // input type, Video or Image
   int isplot; // 0 no plot, 1 plot, 2:plot and save as jpg
-  int dump; // 0 no dump 1 dump
   int verbose; //verbosity on or off
   double detection_threshold; // detection score less than the threshold are discard (false positives)
+  std::string out_txt_filename; // file to save the detection in csv format
 };
 
 

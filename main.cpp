@@ -16,6 +16,7 @@
 
 #include "poselet_api.h"
 #include "util.h"
+#include "resultwriter.h"
 #include "logging.h"
 
 
@@ -36,12 +37,12 @@ int main( int argc, char* argv[] )
   params argins = parse_argument(argc,argv);
   if (!file_exists(argins.fn_model.c_str()))
     {
-      plog.messege("Cannot open model file: " + argins.fn_model, 0, MessageType::Critical);
+      plog.messege("Cannot open model file: " + argins.fn_model, 0, MessegeType::Critical);
       return 0;
     }
   if (!file_exists(argins.fn_input.c_str()))
     {
-      plog.messege("Cannot open image/video file: " + argins.fn_input, 0, MessageType::Critical);
+      plog.messege("Cannot open image/video file: " + argins.fn_input, 0, MessegeType::Critical);
       return 0;
     }
 
@@ -69,27 +70,33 @@ int main( int argc, char* argv[] )
           boost::filesystem::path dir(outfn);
           if(!(boost::filesystem::create_directories(dir)))
             {
-              plog.messege("Can not write output directory! " + outfn, false, MessageType::Warning);
+              plog.messege("Can not write output directory! " + outfn, false, MessegeType::Warning);
             }
         }
       else if(argins.intype==FILETYPE::IMAGE)
         {
-          outfn = outfn + inputfilename + "-detection." + ext;
+          outfn = outfn + inputfilename + "-detection.";
         }
     }
+
+  // this write the detection results to a csv file
+  std::string outfiledir = inputfiledir + separator();
+  boxreadwriter  write_(outfiledir,argins.out_txt_filename,writer);
+  int frame_cnt = 0;
+  std::vector<cv::Rect> resultBBs;
+  std::vector<double> scores;
 
   if(argins.intype==FILETYPE::VIDEO)
     {
       cv::VideoCapture vid;
       if(!(vid.open(argins.fn_input)))
         {
-          plog.messege("Error:opening video file file!",false,MessageType::Critical);
+          plog.messege("Error:opening video file file!",false,MessegeType::Critical);
           return 0;
         }
-      int frame_cnt = 0;
       while(vid.read(cvimg))
         {
-          plog.messege("Frame:" + std::to_string(frame_cnt),true,MessageType::Others);
+          plog.messege("Frame:" + std::to_string(frame_cnt),true,MessegeType::Others);
           img = getGILImageView(cvimg);
           // clear
           poselet_hits.clear();
@@ -97,11 +104,11 @@ int main( int argc, char* argv[] )
           // do detection
           Image img_proxy(img.width(), img.height(), const_view(img).pixels().row_size(),Image::k8Bit, Image::kRGB, interleaved_view_get_raw_data(const_view(img)));
           RunDetector(img_proxy, boost::bind(append_hit<PoseletHit>, _1,boost::ref(poselet_hits)), boost::bind(append_hit<ObjectHit>, _1,boost::ref(object_hits)), true, 0, false);
-
-          // show or save results
+          // get detection bouding boxes with threshold score and limit bounding boxes to be inside the image.
+          getBBfromObjectHits(object_hits,argins.detection_threshold,cv::Rect(0,0,cvimg.cols,cvimg.rows),resultBBs,scores);
           if(argins.isplot>0)
             {
-              result = drawObjectbb(cvimg,object_hits,argins.detection_threshold);
+              result = drawObjectbb(cvimg,resultBBs,scores);
               if (argins.isplot==1 || argins.isplot==2 )
                 {
                   cv::imshow("Detection-Result", result);
@@ -121,9 +128,13 @@ int main( int argc, char* argv[] )
                   }
                   catch(std::exception &e)
                   {
-                    plog.messege("Error: " + std::string(e.what()) + tmp_fn,true, MessageType::Error);
+                    plog.messege("Error: " + std::string(e.what()) + tmp_fn,true, MessegeType::Error);
                   }
                 }
+            }
+          if(!argins.out_txt_filename.empty())
+            {
+              write_.writebb(frame_cnt,resultBBs,scores);
             }
           frame_cnt++;
         }
@@ -133,12 +144,15 @@ int main( int argc, char* argv[] )
       cvimg = cv::imread(argins.fn_input);
       img = getGILImageView(cvimg);
 
+      // run detector
       Image img_proxy(img.width(), img.height(), const_view(img).pixels().row_size(),Image::k8Bit, Image::kRGB, interleaved_view_get_raw_data(const_view(img)));
       RunDetector(img_proxy, boost::bind(append_hit<PoseletHit>, _1,boost::ref(poselet_hits)), boost::bind(append_hit<ObjectHit>, _1,boost::ref(object_hits)), true, 0, false);
-
+      // get bounding box
+      getBBfromObjectHits(object_hits,argins.detection_threshold,cv::Rect(0,0,cvimg.cols,cvimg.rows),resultBBs,scores);
+      // save/plot results
       if(argins.isplot>0)
         {
-          result = drawObjectbb(cvimg,object_hits,5.7);
+          result = drawObjectbb(cvimg,resultBBs,scores);
           if (argins.isplot==1 || argins.isplot==2 )
             {
               cv::imshow("Detection-Result", result);
@@ -147,7 +161,7 @@ int main( int argc, char* argv[] )
             }
           if(argins.isplot==2 || argins.isplot==3)
             {
-              cv::imwrite(outfn, result);
+              cv::imwrite(outfn + ext, result);
             }
         }
 
@@ -159,7 +173,11 @@ int main( int argc, char* argv[] )
               scoresum+=object_hits[i].score;
             }
           std::string msg = "Found " + std::to_string(object_hits.size()) + " objects with scoresum "_RED + std::to_string(scoresum)+_RESET " in "_RED + std::to_string(t.elapsed())+ _RESET" sec.";
-          plog.messege(msg,false, MessageType::Info);
+          plog.messege(msg,false, MessegeType::Info);
+        }
+      if(!argins.out_txt_filename.empty())
+        {
+          write_.writebb(frame_cnt,resultBBs,scores);
         }
     }
   return 0;

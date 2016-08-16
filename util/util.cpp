@@ -78,7 +78,7 @@ cv::Mat drawObjectbb(cv::Mat img, std::vector<poselet_api::ObjectHit> object_hit
             bbs.y = 15.0;
           if(IsInside(bbs,imgsize))
             {
-             //std::cout<<bbs<<std::endl;
+              //std::cout<<bbs<<std::endl;
               cv::Mat roi = ret(bbs);
               cv::Mat color(roi.size(), CV_8UC3,get_color(i));
               cv::addWeighted(color, alpha, roi, 1.0 - alpha , 0.0, roi);
@@ -92,6 +92,64 @@ cv::Mat drawObjectbb(cv::Mat img, std::vector<poselet_api::ObjectHit> object_hit
     }
   return ret;
 
+}
+
+cv::Mat drawObjectbb(cv::Mat img, std::vector<cv::Rect> object_hits, std::vector<double> score_hit)
+{
+  cv::Mat ret = img.clone();
+  cv::Rect imgsize(0,0,img.cols,img.rows);
+  int thickline = floor(img.cols/250.);
+  double alpha = 0.3;
+  for(int i=0; i<object_hits.size();++i)
+    {
+      cv::Rect bbs = object_hits[i];
+      if(bbs.x +  bbs.width >= img.cols)
+        bbs.width = img.cols- bbs.x - 15.0;
+      if(bbs.x<=0)
+        bbs.x = 15.0;
+      if(bbs.y +  bbs.height >= img.rows)
+        bbs.height = img.rows- bbs.y- 15.0;
+      if(bbs.y<=0)
+        bbs.y = 15.0;
+      if(IsInside(bbs,imgsize))
+        {
+          cv::Mat roi = ret(bbs);
+          cv::Mat color(roi.size(), CV_8UC3,get_color(i));
+          cv::addWeighted(color, alpha, roi, 1.0 - alpha , 0.0, roi);
+          std::ostringstream text;
+          text << "["<<score_hit[i]<< "]";
+          cv::rectangle(ret,bbs,get_color(i),thickline);
+          setLabel(ret,text.str(), bbs.tl());
+        }
+    }
+  return ret;
+}
+
+
+void getBBfromObjectHits(std::vector<poselet_api::ObjectHit> object_hits,double scorethr,cv::Rect imgsize,std::vector<cv::Rect>&bb_out,std::vector<double>&scores_out)
+{
+  bb_out.clear();
+  scores_out.clear();
+  for(int i=0; i<object_hits.size();++i)
+    {
+      if(object_hits[i].score >= scorethr)
+        {
+          cv::Rect bbs(object_hits[i].x0, object_hits[i].y0,object_hits[i].width,object_hits[i].height);
+          if(bbs.x +  bbs.width >= imgsize.width)
+            bbs.width = imgsize.width- bbs.x - 15.0;
+          if(bbs.x<=0)
+            bbs.x = 15.0;
+          if(bbs.y +  bbs.height >= imgsize.width)
+            bbs.height = imgsize.height- bbs.y- 15.0;
+          if(bbs.y<=0)
+            bbs.y = 15.0;
+          if(IsInside(bbs,imgsize))
+            {
+              bb_out.push_back(bbs);
+              scores_out.push_back(object_hits[i].score);
+            }
+        }
+    }
 }
 
 void setLabel(cv::Mat &im, const std::string &name, const cv::Point2f &og)
@@ -140,15 +198,10 @@ std::ostream& operator <<(std::ostream &o, const params &p)
       ext = "No";
       break;
     }
-  switch (p.dump)
+  ext1 = "No";
+  if(p.out_txt_filename.length()>0)
     {
-    case 1:
       ext1 = "Yes";
-      break;
-    case 0:
-    default:
-      ext1 = "No";
-      break;
     }
   o<< "------------------\nModel Directory: "<<dir<<"\nModel:"<<modelname<<"\n"<<"Input type: "<<filetypes[p.intype]<<"\n"
    <<"Plot result: "<<ext<<"\n"<<"Save csv file: "<<ext1<<"\n------------------\n";
@@ -165,7 +218,7 @@ params parse_argument(int argc, char **argv)
       ("input,i", po::value<std::string>(), "File path to input image or video")
       ("thr,t", po::value<double>()->default_value(5.1), "Detection scores threshold. Detection lower than this value are discarded.")
       ("plot,p", po::value<int>()->default_value(0), "show detection results, [ 0: no show, 1: show, 2: show and save as jpg , 3: just save ]")
-      ("dump,d", po::value<int>()->default_value(0), "save the detection bounding box results to a text (csv) file")
+      ("out,o", po::value<std::string>()->default_value("detections.txt"), "save the detection bounding box results to a text (csv) file")
       ("ver,v",po::value<int>()->default_value(0),"verbosity");
   po::variables_map vm;
   po::store(po::parse_command_line(argc,argv,desc),vm);
@@ -175,7 +228,7 @@ params parse_argument(int argc, char **argv)
   }
   catch(po::error& e)
   {
-    plog.messege("Error: " + std::string(e.what()), 0, MessageType::Critical);
+    plog.messege("Error: " + std::string(e.what()), 0, MessegeType::Critical);
     exit(1);
   }
   if(vm.count("help"))
@@ -191,7 +244,7 @@ params parse_argument(int argc, char **argv)
   ret.fn_model = vm["model"].as<std::string>();
   if(!vm.count("input"))
     {
-      plog.messege("Input file can not be empty! Pass an image or a video file.",false,MessageType::Critical);
+      plog.messege("Input file can not be empty! Pass an image or a video file.",false,MessegeType::Critical);
       std::string usg = "Usage: " + std::string(argv[0]) +" -m <detector.xml> -i <image.jpg> -p 1 -d 0";
       plog.messege(usg,false,Info);
       exit(1);
@@ -202,13 +255,13 @@ params parse_argument(int argc, char **argv)
       ret.intype = checkInputType(ret.fn_input);
       if (ret.intype == FILETYPE::UNKNOWN)
         {
-          plog.messege("Unknow Input file. File can not be read! Make sure " + ret.fn_input + " is a valid image or video file.",false,MessageType::Critical);
+          plog.messege("Unknow Input file. File can not be read! Make sure " + ret.fn_input + " is a valid image or video file.",false,MessegeType::Critical);
           exit(1);
         }
     }
   ret.detection_threshold = vm["thr"].as<double>();
   ret.isplot = vm["plot"].as<int>();
-  ret.dump = vm["dump"].as<int>();
+  ret.out_txt_filename = vm["out"].as<std::string>();
   ret.verbose = vm["ver"].as<int>();
   return ret;
 }

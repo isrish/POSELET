@@ -51,7 +51,7 @@
 #define _GREENB  "\x1b[42m"
 #define _RESETB  "\x1b[49m"
 
-enum MessageType
+enum MessegeType
 {
     Critical,
     Error,
@@ -81,7 +81,8 @@ public:
         end();
     }
 
-    void messege(std::string msg, bool showtime, MessageType mtype);
+   void messege(std::string msg, bool showtime, MessegeType mtype);
+   static void messege(std::string msg, MessegeType mtype);
 
 private:
     timestamp_t start_;
